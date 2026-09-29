@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import Login from './pages/Login'
 import Overview from './pages/Overview'
 import Rooms from './pages/Rooms'
@@ -29,13 +30,22 @@ import {
   LogOut
 } from 'lucide-react';
 
+const API_URL = import.meta.env.VITE_API_URL || '/api';
+
 export default function App() {
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem('user')
     return saved ? JSON.parse(saved) : null
   })
 
-  const [activePage, setActivePage] = useState('dashboard')
+  const navigate = useNavigate();
+  const location = useLocation();
+  const activePage = location.pathname.split('/')[1] || 'dashboard';
+
+  const setActivePage = (page) => {
+    navigate(`/${page}`);
+  };
+
   const [rooms, setRooms] = useState([])
   const [students, setStudents] = useState([])
   const [staff, setStaff] = useState([])
@@ -260,62 +270,76 @@ export default function App() {
             </div>
           )}
 
-          {activePage === 'dashboard' && (
-            <Overview
-              user={user}
-              dashboard={dashboardStats}
-              rooms={rooms}
-              setActivePage={setActivePage}
-              isAdmin={isAdmin}
-              totalBeds={totalBeds}
-              occupancyPercent={occupancyPercent}
-            />
-          )}
-          {activePage === 'rooms' && ['admin', 'staff'].includes(user.role) && (
-            <Rooms rooms={rooms} fetchRooms={fetchRooms} user={user} setPageError={setPageError} setNotice={setNotice} isAdmin={isAdmin} />
-          )}
-          {activePage === 'mess' && (
-            <Mess user={user} token={user.token} setPageError={setPageError} setNotice={setNotice} />
-          )}
-          {activePage === 'students' && ['admin', 'staff'].includes(user.role) && (
-            <Accounts
-              activePage={activePage}
-              isAdmin={isAdmin}
-              accounts={students}
-              rooms={rooms}
-              user={user}
-              setPageError={setPageError}
-              setNotice={setNotice}
-              fetchAccounts={fetchStudents}
-            />
-          )}
-          {activePage === 'staff' && user.role === 'admin' && (
-            <Accounts
-              activePage={activePage}
-              isAdmin={isAdmin}
-              accounts={staff}
-              rooms={rooms}
-              user={user}
-              setPageError={setPageError}
-              setNotice={setNotice}
-              fetchAccounts={fetchStaff}
-            />
-          )}
-          {activePage === 'gatepass' && (
-            <GatePass user={user} token={user.token} setPageError={setPageError} setNotice={setNotice} />
-          )}
-          {activePage === 'complaints' && (
-            <Complaints user={user} token={user.token} setPageError={setPageError} setNotice={setNotice} />
-          )}
-          {activePage === 'visitors' && (
-            <VisitorLog user={user} token={user.token} setPageError={setPageError} setNotice={setNotice} />
-          )}
-          {activePage === 'fees' && ['admin', 'student'].includes(user.role) && (
-            <Fees user={user} token={user.token} accounts={students} setPageError={setPageError} setNotice={setNotice} />
-          )}
-          {activePage === 'reports' && user.role === 'admin' && (
-            <Reports user={user} token={user.token} setPageError={setPageError} setNotice={setNotice} />
-          )}
+          <Routes>
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/dashboard" element={
+              <Overview
+                user={user}
+                dashboard={dashboardStats}
+                rooms={rooms}
+                setActivePage={setActivePage}
+                isAdmin={isAdmin}
+                totalBeds={totalBeds}
+                occupancyPercent={occupancyPercent}
+              />
+            } />
+            <Route path="/rooms" element={
+              ['admin', 'staff'].includes(user.role) ? 
+              <Rooms rooms={rooms} fetchRooms={fetchRooms} user={user} setPageError={setPageError} setNotice={setNotice} isAdmin={isAdmin} /> : 
+              <Navigate to="/dashboard" replace />
+            } />
+            <Route path="/mess" element={
+              <Mess user={user} token={user.token} setPageError={setPageError} setNotice={setNotice} />
+            } />
+            <Route path="/students" element={
+              ['admin', 'staff'].includes(user.role) ?
+              <Accounts
+                activePage="students"
+                isAdmin={isAdmin}
+                accounts={students}
+                rooms={rooms}
+                user={user}
+                setPageError={setPageError}
+                setNotice={setNotice}
+                fetchAccounts={fetchStudents}
+              /> :
+              <Navigate to="/dashboard" replace />
+            } />
+            <Route path="/staff" element={
+              user.role === 'admin' ?
+              <Accounts
+                activePage="staff"
+                isAdmin={isAdmin}
+                accounts={staff}
+                rooms={rooms}
+                user={user}
+                setPageError={setPageError}
+                setNotice={setNotice}
+                fetchAccounts={fetchStaff}
+              /> :
+              <Navigate to="/dashboard" replace />
+            } />
+            <Route path="/gatepass" element={
+              <GatePass user={user} token={user.token} setPageError={setPageError} setNotice={setNotice} />
+            } />
+            <Route path="/complaints" element={
+              <Complaints user={user} token={user.token} setPageError={setPageError} setNotice={setNotice} />
+            } />
+            <Route path="/visitors" element={
+              <VisitorLog user={user} token={user.token} setPageError={setPageError} setNotice={setNotice} />
+            } />
+            <Route path="/fees" element={
+              ['admin', 'student'].includes(user.role) ?
+              <Fees user={user} token={user.token} accounts={students} setPageError={setPageError} setNotice={setNotice} /> :
+              <Navigate to="/dashboard" replace />
+            } />
+            <Route path="/reports" element={
+              user.role === 'admin' ?
+              <Reports user={user} token={user.token} setPageError={setPageError} setNotice={setNotice} /> :
+              <Navigate to="/dashboard" replace />
+            } />
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          </Routes>
         </div>
       </main>
     </div>

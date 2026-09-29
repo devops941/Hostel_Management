@@ -2,6 +2,8 @@ import React, { useState } from 'react'
 import EmptyState from '../components/EmptyState'
 import { DoorOpen, Trash2, Plus, AlertTriangle } from 'lucide-react'
 
+const API_URL = import.meta.env.VITE_API_URL || '/api';
+
 export default function Rooms({ isAdmin, rooms, user, fetchRooms, setPageError, setNotice }) {
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, id: null });
 
